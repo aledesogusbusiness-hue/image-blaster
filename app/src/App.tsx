@@ -10,6 +10,7 @@ import { useDebugStore } from './store/debug'
 import { isEditableTarget } from './utils/dom'
 import type { WorldEntry, WorldHoverPreview, WorldObjectAsset } from './types/world'
 import { TerminalWindowIcon } from '@phosphor-icons/react'
+import { GenerateWorldPanel } from './components/GenerateWorldPanel'
 
 const LevaPanel = import.meta.env.DEV
   ? lazy(() => import('leva').then((module) => ({ default: module.Leva })))
@@ -56,13 +57,7 @@ export function App() {
     }
   }, [refreshWorlds])
 
-  if (!worlds.length) {
-    return (
-      <div className="flex items-center justify-center h-screen text-white bg-black">
-        No worlds found in worlds/
-      </div>
-    )
-  }
+  if (!worlds.length) return <GenerateWorldPanel />
 
   return (
     <LoadedApp
