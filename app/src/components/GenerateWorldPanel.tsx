@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { WorldViewer } from './WorldViewer'
+import { TouchControls } from './TouchControls'
+import { BottomLeftControls, ViewerModeHotkeys } from './BottomLeftControls'
 import type { World } from '../types/world'
 
 type Result = any
@@ -95,10 +97,14 @@ export function GenerateWorldPanel() {
   } : undefined
 
   if (remoteWorld && Object.values(remoteWorld.assets.splats.spz_urls).some(Boolean)) {
-    return <div className="relative w-screen h-screen bg-black overflow-hidden">
+    return <div className="relative w-screen h-screen bg-black overflow-hidden select-none touch-none">
+      <ViewerModeHotkeys />
       <WorldViewer world={remoteWorld} slug="hometour-marble-test" sourceImageUrl={preview || remoteWorld.assets.thumbnail_url} objectAssets={[]} allObjectAssets={[]} worldSfxUrls={[]} uiVisible={false} />
+      <TouchControls />
       <button onClick={() => { setResult(null); window.localStorage.removeItem(STORAGE_KEY) }} className="fixed top-4 left-4 z-50 rounded-xl bg-black/70 border border-white/20 px-4 py-2 text-sm text-white backdrop-blur">← New world</button>
       <div className="fixed top-4 right-4 z-50 rounded-xl bg-black/70 border border-white/20 px-3 py-2 text-xs text-white/70 backdrop-blur">SPZ + collider</div>
+      <div className="fixed inset-x-0 bottom-4 z-30 flex justify-center px-4"><BottomLeftControls /></div>
+      <div className="pointer-events-none fixed bottom-20 left-0 right-0 z-30 flex justify-between px-6 text-[11px] text-white/55 md:hidden"><span>LEFT · MOVE</span><span>LOOK · RIGHT</span></div>
     </div>
   }
 
