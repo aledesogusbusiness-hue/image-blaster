@@ -61,31 +61,33 @@ export function TouchControls() {
     }
   }, [controllerMode])
 
-  if (controllerMode !== 'fps' || !joystick.origin) return null
+  if (controllerMode !== 'fps') return null
 
-  const dx = Math.max(-MAX_RADIUS, Math.min(MAX_RADIUS, (joystick.current?.x ?? joystick.origin.x) - joystick.origin.x))
-  const dy = Math.max(-MAX_RADIUS, Math.min(MAX_RADIUS, (joystick.current?.y ?? joystick.origin.y) - joystick.origin.y))
+  const fallback = { x: 92, y: typeof window !== 'undefined' ? window.innerHeight - 118 : 600 }
+  const origin = joystick.origin ?? fallback
+  const dx = Math.max(-MAX_RADIUS, Math.min(MAX_RADIUS, (joystick.current?.x ?? origin.x) - origin.x))
+  const dy = Math.max(-MAX_RADIUS, Math.min(MAX_RADIUS, (joystick.current?.y ?? origin.y) - origin.y))
 
   return (
     <div className="fixed inset-0 pointer-events-none md:hidden z-20">
       {/* Joystick base */}
       <div
-        className="absolute rounded-full border-2 border-white/30 bg-white/10"
+        className="absolute rounded-full border-2 border-white/60 bg-black/30 backdrop-blur-sm shadow-lg"
         style={{
           width: MAX_RADIUS * 2 + 40,
           height: MAX_RADIUS * 2 + 40,
-          left: joystick.origin.x - (MAX_RADIUS + 20),
-          top: joystick.origin.y - (MAX_RADIUS + 20),
+          left: origin.x - (MAX_RADIUS + 20),
+          top: origin.y - (MAX_RADIUS + 20),
         }}
       />
       {/* Joystick dot */}
       <div
-        className="absolute rounded-full bg-white/60"
+        className="absolute rounded-full bg-white/90 shadow-lg"
         style={{
           width: 28,
           height: 28,
-          left: joystick.origin.x + dx - 14,
-          top: joystick.origin.y + dy - 14,
+          left: origin.x + dx - 14,
+          top: origin.y + dy - 14,
         }}
       />
     </div>
