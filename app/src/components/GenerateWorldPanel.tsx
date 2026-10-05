@@ -24,6 +24,7 @@ export function GenerateWorldPanel() {
   const [status, setStatus] = useState('Ready')
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<Result>(null)
+  const [recoverId, setRecoverId] = useState('86523784')
   const pollRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
@@ -52,6 +53,24 @@ export function GenerateWorldPanel() {
     try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(completed)) } catch { /* best effort */ }
     setStatus('World generated — opening viewer')
     setBusy(false)
+  }
+
+  async function recover() {
+    const id = recoverId.trim()
+    if (!id || busy) return
+    setBusy(true); setStatus('Recovering existing Marble generation…')
+    try {
+      const response = await fetch(`/api/worlds/operation?id=${encodeURIComponent(id)}`)
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Recovery failed')
+      if (!data.done) throw new Error('This Marble operation is not complete yet')
+      if (data.error) throw new Error(typeof data.error === 'string' ? data.error : 'Marble operation failed')
+      const completed = data.response || data
+      setResult(completed)
+      try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(completed)) } catch { /* best effort */ }
+      setStatus('Existing world recovered')
+    } catch (error) { fail(error) }
+    finally { setBusy(false) }
   }
 
   function fail(error: any) {
@@ -131,6 +150,8 @@ export function GenerateWorldPanel() {
       </label>
       <textarea value={prompt} onChange={e=>setPrompt(e.target.value)} rows={4} className="w-full rounded-xl bg-white/[.06] border border-white/10 p-3 text-sm mb-4" />
       <button disabled={!file || busy} onClick={generate} className="w-full rounded-xl bg-white text-black py-3 font-semibold disabled:opacity-30">{busy ? 'Generating…' : 'Generate World'}</button>
+      <div className="my-5 flex items-center gap-3 text-xs text-white/35"><span className="h-px flex-1 bg-white/10"/><span>OR RECOVER</span><span className="h-px flex-1 bg-white/10"/></div>
+      <div className="flex gap-2"><input value={recoverId} onChange={e=>setRecoverId(e.target.value)} placeholder="Marble operation ID" className="min-w-0 flex-1 rounded-xl bg-white/[.06] border border-white/10 px-3 py-3 text-sm"/><button disabled={!recoverId.trim() || busy} onClick={recover} className="rounded-xl border border-white/20 px-4 py-3 text-sm font-semibold disabled:opacity-30">Open existing</button></div>
       <div className="mt-4 text-sm text-white/60">{status}</div>
       {links.length > 0 && <div className="mt-5 space-y-2">{links.map(([label,url]) => <a key={label} href={url} target="_blank" rel="noreferrer" className="block rounded-xl bg-white/[.06] px-4 py-3 hover:bg-white/10">{label} ↗</a>)}</div>}
     </div>
