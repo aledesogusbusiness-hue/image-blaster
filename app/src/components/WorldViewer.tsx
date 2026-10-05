@@ -152,11 +152,12 @@ export function WorldViewer({
   const sunIntensity = useDebugStore((s) => s.sunIntensity)
   const sunColor = useDebugStore((s) => s.sunColor)
   const [sourceThumbnailCollapsed, setSourceThumbnailCollapsed] = useState(false)
-  const colliderUrl = desiredWorld?.assets.mesh.collider_mesh_url.startsWith('/worlds/')
-    ? desiredWorld.assets.mesh.collider_mesh_url
+  const isRenderableAssetUrl = (url?: string) => Boolean(url && (url.startsWith('/worlds/') || url.startsWith('https://')))
+  const colliderUrl = isRenderableAssetUrl(desiredWorld?.assets.mesh.collider_mesh_url)
+    ? desiredWorld!.assets.mesh.collider_mesh_url
     : ''
-  const panoUrl = desiredWorld?.assets.imagery.pano_url.startsWith('/worlds/')
-    ? desiredWorld.assets.imagery.pano_url
+  const panoUrl = isRenderableAssetUrl(desiredWorld?.assets.imagery.pano_url)
+    ? desiredWorld!.assets.imagery.pano_url
     : ''
 
   useEffect(() => {
