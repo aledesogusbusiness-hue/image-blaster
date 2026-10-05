@@ -24,7 +24,7 @@ export function GenerateWorldPanel() {
   const [status, setStatus] = useState('Ready')
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<Result>(null)
-  const [recoverId, setRecoverId] = useState('86523784')
+  const [recoverId, setRecoverId] = useState('86523784-7a5c-40ba-abf7-d49037066722')
   const pollRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
