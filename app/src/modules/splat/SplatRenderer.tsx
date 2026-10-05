@@ -92,7 +92,8 @@ export function SplatRenderer({
     }, [])
 
     useEffect(() => {
-      if (sparkRef.current) sparkRef.current.encodeLinear = encodeLinear
+      // Spark 2.x runtime supports encodeLinear, but the published TypeScript type omits it.
+      if (sparkRef.current) (sparkRef.current as SparkRenderer & { encodeLinear?: boolean }).encodeLinear = encodeLinear
     }, [encodeLinear])
 
     const sparkArgs = useMemo(() => ({ renderer, enableLod: true, encodeLinear: initialEncodeLinear.current }), [renderer])
