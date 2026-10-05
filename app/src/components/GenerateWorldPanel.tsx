@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { WorldViewer } from './WorldViewer'
+import type { World } from '../types/world'
 
 type Result = any
 
@@ -11,6 +13,8 @@ function readAsBase64(file: File) {
   })
 }
 
+const STORAGE_KEY = 'hometour-marble-last-result-v1'
+
 export function GenerateWorldPanel() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState('')
@@ -20,7 +24,16 @@ export function GenerateWorldPanel() {
   const [result, setResult] = useState<Result>(null)
   const pollRef = useRef<number | undefined>(undefined)
 
-  useEffect(() => () => window.clearTimeout(pollRef.current), [])
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        setResult(JSON.parse(saved))
+        setStatus('Last generated world restored')
+      }
+    } catch { /* ignore stale local state */ }
+    return () => window.clearTimeout(pollRef.current)
+  }, [])
 
   async function poll(id: string) {
     const response = await fetch(`/api/worlds/operation?id=${encodeURIComponent(id)}`)
@@ -32,8 +45,10 @@ export function GenerateWorldPanel() {
       pollRef.current = window.setTimeout(() => void poll(id).catch(fail), 10000)
       return
     }
-    setResult(data.response || data)
-    setStatus('World generated')
+    const completed = data.response || data
+    setResult(completed)
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(completed)) } catch { /* best effort */ }
+    setStatus('World generated — opening viewer')
     setBusy(false)
   }
 
@@ -59,6 +74,34 @@ export function GenerateWorldPanel() {
   }
 
   const assets = result?.assets || {}
+  const remoteWorld: World | undefined = result?.assets ? {
+    world_id: result.world_id || result.id || 'hometour-marble-test',
+    display_name: result.display_name || 'HomeTour Marble Test',
+    assets: {
+      mesh: { collider_mesh_url: assets?.mesh?.collider_mesh_url || '' },
+      imagery: { pano_url: assets?.imagery?.pano_url || '' },
+      splats: {
+        spz_urls: assets?.splats?.spz_urls || {},
+        semantics_metadata: assets?.splats?.semantics_metadata || { metric_scale_factor: 1, ground_plane_offset: 0, flip_y: true },
+      },
+      thumbnail_url: assets?.thumbnail_url || '',
+      caption: assets?.caption || '',
+    },
+    world_marble_url: result.world_marble_url || '',
+    tags: result.tags || null,
+    world_prompt: result.world_prompt || prompt,
+    created_at: result.created_at || null,
+    updated_at: result.updated_at || null,
+  } : undefined
+
+  if (remoteWorld && Object.values(remoteWorld.assets.splats.spz_urls).some(Boolean)) {
+    return <div className="relative w-screen h-screen bg-black overflow-hidden">
+      <WorldViewer world={remoteWorld} slug="hometour-marble-test" sourceImageUrl={preview || remoteWorld.assets.thumbnail_url} objectAssets={[]} allObjectAssets={[]} worldSfxUrls={[]} uiVisible={false} />
+      <button onClick={() => { setResult(null); window.localStorage.removeItem(STORAGE_KEY) }} className="fixed top-4 left-4 z-50 rounded-xl bg-black/70 border border-white/20 px-4 py-2 text-sm text-white backdrop-blur">← New world</button>
+      <div className="fixed top-4 right-4 z-50 rounded-xl bg-black/70 border border-white/20 px-3 py-2 text-xs text-white/70 backdrop-blur">SPZ + collider</div>
+    </div>
+  }
+
   const spz = assets?.splats?.spz_urls || {}
   const links = [
     ['Collider GLB', assets?.mesh?.collider_mesh_url],
